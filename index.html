@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatterByte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #45B1E8;
+    --blue-dark: #1D7FB3;
+    --bg: #0D1B2A;
+    --panel: #13263B;
+    --panel-hover: #1B3550;
+    --text: #E8F4FB;
+    --muted: #9FC3D9;
+    --good: #5FD068;
+    --bad: #FF5C6C;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    padding: 16px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+  }
+  main { width: 100%; max-width: 720px; }
+  h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(18px, 6vw, 34px);
+    color: var(--blue);
+    text-shadow: 4px 4px 0 var(--blue-dark);
+    text-align: center;
+    margin: 16px 0 24px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 12px; }
+  button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    padding: 10px 12px;
+    background: var(--panel);
+    color: var(--text);
+    border: 3px solid var(--blue);
+    box-shadow: 4px 4px 0 var(--blue-dark);
+    cursor: pointer;
+  }
+  button:hover { background: var(--panel-hover); }
+  button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--blue-dark); }
+  button:focus-visible { outline: 3px dashed var(--text); outline-offset: 3px; }
+  button.on { background: var(--blue); color: var(--bg); }
+  #tags button { font-size: 9px; padding: 8px 10px; box-shadow: 3px 3px 0 var(--blue-dark); }
+  .card {
+    margin-top: 16px;
+    padding: 20px;
+    background: var(--panel);
+    border: 4px solid var(--blue);
+    box-shadow: 8px 8px 0 var(--blue-dark);
+  }
+  .label { font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--blue); }
+  .prompt { font-size: 30px; font-weight: 700; margin: 14px 0 6px; overflow-wrap: anywhere; }
+  .speak { cursor: pointer; border-bottom: 2px dotted var(--blue); }
+  .speak:hover { color: var(--blue); }
+  .hint { color: var(--muted); }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+  .opts button { font-family: 'Space Mono', monospace; font-size: 18px; text-align: left; }
+  .opts button.good { background: var(--good); border-color: var(--good); color: var(--bg); }
+  .opts button.bad { background: var(--bad); border-color: var(--bad); color: var(--bg); }
+  .feedback { min-height: 2.4em; margin: 16px 0 8px; }
+  .feedback .head { font-family: 'Press Start 2P', monospace; font-size: 12px; }
+  .stats { font-family: 'Press Start 2P', monospace; font-size: 10px; line-height: 2; color: var(--muted); text-align: center; margin-top: 20px; }
+  .keys { color: var(--muted); font-size: 16px; text-align: center; margin-top: 8px; }
+  @media (max-width: 480px) { .opts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>CHATTERBYTE</h1>
+  <div class="row" id="langs"></div>
+  <div class="row">
+    <button data-mode="words">WORDS</button>
+    <button data-mode="sentences">SENTENCES</button>
+  </div>
+  <div class="row" id="tags"></div>
+  <section class="card">
+    <div class="label" id="label"></div>
+    <div class="prompt" id="prompt"></div>
+    <div class="hint" id="hint"></div>
+    <div class="opts" id="opts"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="row">
+      <button id="say" hidden>SAY IT</button>
+      <button id="next" hidden>NEXT &gt;</button>
+    </div>
+  </section>
+  <div class="stats" id="stats"></div>
+  <div class="keys">Keys: 1-4 to answer, Enter for next</div>
+</main>
+
+<script src="data.js"></script>
+<script>
+const LANGS = {
+  // voices: language code prefixes to try, in order. fallback: names for voices from a related language,
+  // shown on the SAY IT button. Dutch is closest to Afrikaans; isiZulu is closest to isiXhosa and has the same clicks.
+  // Keep in alphabetical order by name; the language buttons appear in this order.
+  af: { name: 'AFRIKAANS', voices: ['af', 'nl'], fallback: { nl: 'DUTCH' } },
+  de: { name: 'GERMAN', voices: ['de'] },
+  xh: { name: 'ISIXHOSA', voices: ['xh', 'zu'], fallback: { zu: 'ZULU' } },
+  it: { name: 'ITALIAN', voices: ['it'] },
+  nb: { name: 'NORWEGIAN', voices: ['nb', 'no'] },
+  es: { name: 'SPANISH', voices: ['es'] },
+};
+const KEY = 'pixel-lingo'; // The app's old name. Do not change this key, or saved progress is lost.
+const $ = id => document.getElementById(id);
+
+let save;
+try { save = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { save = {}; }
+save.lang ||= 'es';
+save.mode ||= 'words';
+save.items ||= {};   // per item: { r: right count, w: wrong count }
+save.totals ||= {};  // per language: { r, w, best }
+save.tags ||= {};    // per language: selected sentence tag, or 'all'
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch {} };
+
+let current, answered, lastId, streak = 0;
+
+const shuffle = a => {
+  a = [...a];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// ponytail: weighted random (missed items come back more often) instead of real spaced repetition.
+// Switch to SM-2 style scheduling if the item lists grow large.
+function pick(items, idOf) {
+  const pool = items.filter(x => idOf(x) !== lastId);
+  const weights = pool.map(x => {
+    const s = save.items[idOf(x)] || { r: 0, w: 0 };
+    return Math.max(1, 1 + 3 * s.w - s.r);
+  });
+  let n = Math.random() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) if ((n -= weights[i]) < 0) return pool[i];
+  return pool[pool.length - 1];
+}
+
+function buildQuestion() {
+  const { lang, mode } = save;
+  const set = DATA[lang][mode];
+  if (mode === 'words') {
+    const item = pick(set, w => lang + ':w:' + w[0]);
+    const toEn = Math.random() < 0.5;
+    const col = toEn ? 1 : 0;
+    const answer = item[col];
+    const others = [...new Set(shuffle(set).map(w => w[col]))].filter(x => x !== answer).slice(0, 3);
+    return {
+      id: lang + ':w:' + item[0],
+      label: toEn ? 'WHAT DOES THIS MEAN?' : 'PICK THE ' + LANGS[lang].name + ' WORD',
+      prompt: toEn ? item[0] : item[1],
+      hint: '',
+      options: shuffle([answer, ...others]),
+      answer,
+      say: item[0],
+      note: '',
+      promptIsTarget: toEn,  // true when the prompt is in the language being learned
+      optsAreTarget: !toEn,
+      splitWords: false,     // a vocabulary entry such as "die stoel" is spoken as one unit
+    };
+  }
+  const tag = save.tags[lang] || 'all';
+  const item = pick(tag === 'all' ? set : set.filter(q => q.t === tag), q => lang + ':s:' + q.s);
+  return {
+    id: lang + ':s:' + item.s,
+    label: 'FILL THE BLANK',
+    prompt: item.s,
+    hint: item.en,
+    options: shuffle(item.o),
+    answer: item.a,
+    say: item.s.replace('___', item.a),
+    note: item.n,
+    promptIsTarget: true,
+    optsAreTarget: true,
+    splitWords: true,
+  };
+}
+
+function render() {
+  document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('on', b.dataset.lang === save.lang));
+  document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === save.mode));
+  renderTags();
+  current = buildQuestion();
+  lastId = current.id;
+  answered = false;
+  $('label').textContent = current.label;
+  renderPrompt();
+  $('hint').textContent = current.hint;
+  $('feedback').textContent = '';
+  $('say').hidden = true;
+  $('next').hidden = true;
+  $('opts').replaceChildren(...current.options.map((opt, i) => {
+    const b = document.createElement('button');
+    b.textContent = (i + 1) + '. ' + opt;
+    b.dataset.value = opt;
+    // Before answering, a click answers. After answering, a click says the option out loud.
+    b.onclick = () => answered ? current.optsAreTarget && speak(opt) : choose(opt);
+    return b;
+  }));
+  renderStats();
+}
+
+// Tense filter buttons, only in Sentences mode. Tags appear in the order they are grouped in data.js.
+function renderTags() {
+  const tags = ['all', ...new Set(DATA[save.lang].sentences.map(q => q.t))];
+  const selected = save.tags[save.lang] || 'all';
+  $('tags').hidden = save.mode !== 'sentences';
+  $('tags').replaceChildren(...tags.map(t => {
+    const b = document.createElement('button');
+    b.textContent = t.toUpperCase();
+    b.dataset.tag = t;
+    b.classList.toggle('on', t === selected);
+    return b;
+  }));
+}
+
+function renderStats() {
+  const t = save.totals[save.lang] || { r: 0, w: 0, best: 0 };
+  const total = t.r + t.w;
+  const pct = total ? Math.round(100 * t.r / total) : 0;
+  $('stats').innerHTML = '';
+  $('stats').append(
+    LANGS[save.lang].name + ': ' + t.r + '/' + total + ' (' + pct + '%)',
+    document.createElement('br'),
+    'STREAK ' + streak + '   BEST ' + t.best,
+  );
+}
+
+function choose(value) {
+  if (answered) return;
+  answered = true;
+  const ok = value === current.answer;
+  const item = save.items[current.id] ||= { r: 0, w: 0 };
+  const t = save.totals[save.lang] ||= { r: 0, w: 0, best: 0 };
+  item[ok ? 'r' : 'w']++;
+  t[ok ? 'r' : 'w']++;
+  streak = ok ? streak + 1 : 0;
+  t.best = Math.max(t.best, streak);
+  persist();
+
+  const voice = findVoice();
+  for (const b of $('opts').children) {
+    if (b.dataset.value === current.answer) b.classList.add('good');
+    else if (b.dataset.value === value) b.classList.add('bad');
+    if (voice && current.optsAreTarget) b.title = 'Click to hear';
+  }
+  const head = document.createElement('div');
+  head.className = 'head';
+  head.style.color = ok ? 'var(--good)' : 'var(--bad)';
+  head.textContent = ok ? 'CORRECT!' : 'NOT QUITE.';
+  const body = document.createElement('div');
+  body.append(speakable(current.say, current.splitWords));
+  if (current.note) body.append(' | ' + current.note);
+  $('feedback').replaceChildren(head, body);
+  $('say').hidden = !voice;
+  if (voice) {
+    const fb = Object.entries(LANGS[save.lang].fallback || {}).find(([p]) => voice.lang.toLowerCase().startsWith(p));
+    $('say').textContent = fb ? 'SAY IT (' + fb[1] + ' VOICE)' : 'SAY IT';
+  }
+  $('next').hidden = false;
+  $('next').focus();
+  renderStats();
+}
+
+$('langs').replaceChildren(...Object.entries(LANGS).map(([code, l]) => {
+  const b = document.createElement('button');
+  b.textContent = l.name;
+  b.dataset.lang = code;
+  return b;
+}));
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-lang],[data-mode],[data-tag]');
+  if (!b) return;
+  if (b.dataset.lang) save.lang = b.dataset.lang;
+  if (b.dataset.mode) save.mode = b.dataset.mode;
+  if (b.dataset.tag) save.tags[save.lang] = b.dataset.tag;
+  streak = 0;
+  persist();
+  render();
+});
+$('next').onclick = render;
+// Returns an installed voice for the current language, or undefined. Never falls back to the browser default
+// voice, because that voice reads the text with English pronunciation.
+function findVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const all = speechSynthesis.getVoices();
+  for (const prefix of LANGS[save.lang].voices) {
+    const v = all.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(prefix));
+    if (v) return v;
+  }
+}
+function speak(text) {
+  const voice = findVoice();
+  if (!voice) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.voice = voice;
+  u.lang = voice.lang;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// Returns text with each word (or the whole text, if split is false) as a clickable span that is said out loud.
+// Returns plain text when no matching voice is installed.
+function speakable(text, split) {
+  const frag = document.createDocumentFragment();
+  if (!findVoice()) { frag.append(text); return frag; }
+  for (const part of split ? text.split(/(\s+)/) : [text]) {
+    const spoken = part.replace(/[^\p{L}'\s-]/gu, '').trim();  // drop punctuation such as . , ? and the ___ blank
+    if (!spoken) { frag.append(part); continue; }
+    const span = document.createElement('span');
+    span.className = 'speak';
+    span.textContent = part;
+    span.title = 'Click to hear';
+    span.onclick = () => speak(spoken);
+    frag.append(span);
+  }
+  return frag;
+}
+
+function renderPrompt() {
+  $('prompt').replaceChildren(current.promptIsTarget ? speakable(current.prompt, current.splitWords) : current.prompt);
+}
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices(); // Chrome and Edge load the voice list on the first call.
+  // Voices can finish loading after the first question appears, so redraw the prompt to make it clickable.
+  speechSynthesis.addEventListener('voiceschanged', () => current && renderPrompt());
+}
+$('say').onclick = () => speak(current.say);
+document.addEventListener('keydown', e => {
+  if (!answered && e.key >= '1' && e.key <= '4') {
+    const b = $('opts').children[e.key - 1];
+    if (b) choose(b.dataset.value);
+  } else if (answered && e.key === 'Enter' && document.activeElement !== $('say')) {
+    e.preventDefault();
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
