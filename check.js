@@ -34,7 +34,7 @@ for (const [lang, { words, sentences }] of Object.entries(DATA)) {
 
 // Only the language data may use non-ASCII characters.
 const fs = require("fs");
-for (const f of ["index.html", "check.js", "AGENTS.md", "CLAUDE.md"]) {
+for (const f of ["index.html", "check.js", "AGENTS.md", "CLAUDE.md", "README.md"]) {
   const bad = fs.readFileSync(`${__dirname}/${f}`, "utf8").match(/[^\x00-\x7F]/g);
   assert(!bad, `${f}: non-ASCII characters ${bad}`);
 }

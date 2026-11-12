@@ -1,6 +1,6 @@
 # ChatterByte
 
-A single-page app for language practice. The user speaks English and practices three languages:
+A single-page app for language practice. The user speaks English and practices these languages:
 
 - Afrikaans (beginner)
 - German (beginner)
@@ -16,6 +16,7 @@ Language buttons are in alphabetical order. Keep that order when adding a langua
 - `index.html`: the whole app (HTML, CSS, and JavaScript). No build step and no dependencies.
 - `data.js`: all quiz content. `words` are `[target, english]` pairs. `sentences` are fill-in-the-blank grammar items with one `___` blank, an answer `a`, four options `o`, an English translation `en`, a grammar note `n`, and a tag `t` (for example `present`, `past`, `future`, or `other`). Sentences must be grouped by tag; the filter buttons appear in that order. Each tag needs at least 6 sentences.
 - `check.js`: validates `data.js` and checks for non-ASCII characters in the other files.
+- `README.md`: overview for people who visit the repository. Update it when features or languages change.
 
 ## Running
 
