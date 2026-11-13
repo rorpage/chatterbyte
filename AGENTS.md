@@ -77,6 +77,7 @@ After changing a data file, run `node check.js` (or `node check.js af` for one l
 
 ## How it works
 
+- All options (language, level, mode, and the category or tense filter) are in a side menu. The menu is a full-height panel against the left edge of the window. The menu button is fixed in the top left corner: when the menu is open, it sits at the top of the menu and shows an X; when the menu is closed, it shows three bars. On screens 900px and wider, it is open by default and the page moves right to make room for it. On narrower screens, it is closed by default and covers the page when open. A line above the quiz shows the current choices.
 - For each language, the user picks a level (BEGINNER, INTERMEDIATE, ADVANCED) and a mode (WORDS or SENTENCES). Only content at the selected level is shown.
 - In Words mode, a row of category buttons filters by category (ALL, NUMBERS, COLORS, and so on). In Sentences mode, the same row filters by tense tag. Only categories and tags with at least 3 items at the selected level are shown; items in smaller groups still appear under ALL. The level, category, and tag are saved per language.
 - Every question is multiple choice, so the user never has to type special characters.
@@ -85,6 +86,6 @@ After changing a data file, run `node check.js` (or `node check.js af` for one l
 
 ## Style rules
 
-- Theme: picton blue (`#45B1E8`) on a dark navy background, 8-bit style. Fonts are "Press Start 2P" for headings and buttons and "Space Mono" for body text and language content. VT323 and Pixelify Sans were tried first and were harder to read.
+- Theme: 8-bit style on a black background. Picton blue (`#45B1E8`) is the main color, with neon pink (`#FF2BD6`) and neon green (`#39FF14`) as accents. The quiz card and buttons are dark navy. The colors are CSS variables at the top of `index.html`. Fonts are "Press Start 2P" for headings and buttons and "Space Mono" for body text and language content. VT323 and Pixelify Sans were tried first and were harder to read.
 - Keep it simple: no frameworks, no build tools, no new files unless needed.
 - Make sure all grammar notes and translations are correct. Content must match its level.
