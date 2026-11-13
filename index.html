@@ -55,7 +55,7 @@
   button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--blue-dark); }
   button:focus-visible { outline: 3px dashed var(--text); outline-offset: 3px; }
   button.on { background: var(--blue); color: var(--bg); }
-  #tags button { font-size: 9px; padding: 8px 10px; box-shadow: 3px 3px 0 var(--blue-dark); }
+  #levels button, #filters button { font-size: 9px; padding: 8px 10px; box-shadow: 3px 3px 0 var(--blue-dark); }
   .card {
     margin-top: 16px;
     padding: 20px;
@@ -83,11 +83,12 @@
 <main>
   <h1>CHATTERBYTE</h1>
   <div class="row" id="langs"></div>
+  <div class="row" id="levels"></div>
   <div class="row">
     <button data-mode="words">WORDS</button>
     <button data-mode="sentences">SENTENCES</button>
   </div>
-  <div class="row" id="tags"></div>
+  <div class="row" id="filters"></div>
   <section class="card">
     <div class="label" id="label"></div>
     <div class="prompt" id="prompt"></div>
@@ -103,19 +104,27 @@
   <div class="keys">Keys: 1-4 to answer, Enter for next</div>
 </main>
 
-<script src="data.js"></script>
+<script>const DATA = {};</script>
+<script src="data/af.js"></script>
+<script src="data/de.js"></script>
+<script src="data/es.js"></script>
+<script src="data/it.js"></script>
+<script src="data/nb.js"></script>
+<script src="data/xh.js"></script>
 <script>
 const LANGS = {
   // voices: language code prefixes to try, in order. fallback: names for voices from a related language,
   // shown on the SAY IT button. Dutch is closest to Afrikaans; isiZulu is closest to isiXhosa and has the same clicks.
+  // level: the level the language starts at until the user picks one.
   // Keep in alphabetical order by name; the language buttons appear in this order.
-  af: { name: 'AFRIKAANS', voices: ['af', 'nl'], fallback: { nl: 'DUTCH' } },
-  de: { name: 'GERMAN', voices: ['de'] },
-  xh: { name: 'ISIXHOSA', voices: ['xh', 'zu'], fallback: { zu: 'ZULU' } },
-  it: { name: 'ITALIAN', voices: ['it'] },
-  nb: { name: 'NORWEGIAN', voices: ['nb', 'no'] },
-  es: { name: 'SPANISH', voices: ['es'] },
+  af: { name: 'AFRIKAANS', level: 'beginner', voices: ['af', 'nl'], fallback: { nl: 'DUTCH' } },
+  de: { name: 'GERMAN', level: 'beginner', voices: ['de'] },
+  xh: { name: 'ISIXHOSA', level: 'beginner', voices: ['xh', 'zu'], fallback: { zu: 'ZULU' } },
+  it: { name: 'ITALIAN', level: 'beginner', voices: ['it'] },
+  nb: { name: 'NORWEGIAN', level: 'intermediate', voices: ['nb', 'no'] },
+  es: { name: 'SPANISH', level: 'intermediate', voices: ['es'] },
 };
+const LEVELS = ['beginner', 'intermediate', 'advanced'];
 const KEY = 'pixel-lingo'; // The app's old name. Do not change this key, or saved progress is lost.
 const $ = id => document.getElementById(id);
 
@@ -126,7 +135,25 @@ save.mode ||= 'words';
 save.items ||= {};   // per item: { r: right count, w: wrong count }
 save.totals ||= {};  // per language: { r, w, best }
 save.tags ||= {};    // per language: selected sentence tag, or 'all'
+save.cats ||= {};    // per language: selected word category, or 'all'
+save.levels ||= {};  // per language: selected level
 const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch {} };
+
+const level = () => save.levels[save.lang] || LANGS[save.lang].level;
+
+// The filter row shows word categories in Words mode and tense tags in Sentences mode.
+// Returns the options that exist at the current level, and the selected one ('all' if the saved one does not exist here).
+function filterState() {
+  const words = save.mode === 'words';
+  const items = words
+    ? DATA[save.lang].words.filter(g => g.l === level()).flatMap(g => g.w.map(() => g.c))
+    : DATA[save.lang].sentences.filter(q => q.l === level()).map(q => q.t);
+  // Hide a filter with fewer than 3 items at this level, so one item is not asked over and over.
+  // Those items still appear under ALL.
+  const options = [...new Set(items)].filter(o => items.filter(x => x === o).length >= 3);
+  const saved = (words ? save.cats : save.tags)[save.lang];
+  return { options, selected: options.includes(saved) ? saved : 'all' };
+}
 
 let current, answered, lastId, streak = 0;
 
@@ -142,7 +169,8 @@ const shuffle = a => {
 // ponytail: weighted random (missed items come back more often) instead of real spaced repetition.
 // Switch to SM-2 style scheduling if the item lists grow large.
 function pick(items, idOf) {
-  const pool = items.filter(x => idOf(x) !== lastId);
+  let pool = items.filter(x => idOf(x) !== lastId);
+  if (!pool.length) pool = items; // only one item to choose from
   const weights = pool.map(x => {
     const s = save.items[idOf(x)] || { r: 0, w: 0 };
     return Math.max(1, 1 + 3 * s.w - s.r);
@@ -154,8 +182,12 @@ function pick(items, idOf) {
 
 function buildQuestion() {
   const { lang, mode } = save;
-  const set = DATA[lang][mode];
+  const { selected } = filterState();
   if (mode === 'words') {
+    // Wrong options come from the same pool, so a NUMBERS question gets other numbers as options.
+    const set = DATA[lang].words
+      .filter(g => g.l === level() && (selected === 'all' || g.c === selected))
+      .flatMap(g => g.w);
     const item = pick(set, w => lang + ':w:' + w[0]);
     const toEn = Math.random() < 0.5;
     const col = toEn ? 1 : 0;
@@ -175,8 +207,8 @@ function buildQuestion() {
       splitWords: false,     // a vocabulary entry such as "die stoel" is spoken as one unit
     };
   }
-  const tag = save.tags[lang] || 'all';
-  const item = pick(tag === 'all' ? set : set.filter(q => q.t === tag), q => lang + ':s:' + q.s);
+  const set = DATA[lang].sentences.filter(q => q.l === level() && (selected === 'all' || q.t === selected));
+  const item = pick(set, q => lang + ':s:' + q.s);
   return {
     id: lang + ':s:' + item.s,
     label: 'FILL THE BLANK',
@@ -195,7 +227,9 @@ function buildQuestion() {
 function render() {
   document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('on', b.dataset.lang === save.lang));
   document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === save.mode));
-  renderTags();
+  renderButtons('levels', 'level', LEVELS, level());
+  const { options, selected } = filterState();
+  renderButtons('filters', 'filter', ['all', ...options], selected);
   current = buildQuestion();
   lastId = current.id;
   answered = false;
@@ -216,16 +250,13 @@ function render() {
   renderStats();
 }
 
-// Tense filter buttons, only in Sentences mode. Tags appear in the order they are grouped in data.js.
-function renderTags() {
-  const tags = ['all', ...new Set(DATA[save.lang].sentences.map(q => q.t))];
-  const selected = save.tags[save.lang] || 'all';
-  $('tags').hidden = save.mode !== 'sentences';
-  $('tags').replaceChildren(...tags.map(t => {
+// Fills a row with one button per value. Each button gets data-<attr>="value", and the selected one is highlighted.
+function renderButtons(rowId, attr, values, selected) {
+  $(rowId).replaceChildren(...values.map(v => {
     const b = document.createElement('button');
-    b.textContent = t.toUpperCase();
-    b.dataset.tag = t;
-    b.classList.toggle('on', t === selected);
+    b.textContent = v.toUpperCase();
+    b.dataset[attr] = v;
+    b.classList.toggle('on', v === selected);
     return b;
   }));
 }
@@ -285,11 +316,12 @@ $('langs').replaceChildren(...Object.entries(LANGS).map(([code, l]) => {
   return b;
 }));
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-lang],[data-mode],[data-tag]');
+  const b = e.target.closest('[data-lang],[data-mode],[data-level],[data-filter]');
   if (!b) return;
   if (b.dataset.lang) save.lang = b.dataset.lang;
   if (b.dataset.mode) save.mode = b.dataset.mode;
-  if (b.dataset.tag) save.tags[save.lang] = b.dataset.tag;
+  if (b.dataset.level) save.levels[save.lang] = b.dataset.level;
+  if (b.dataset.filter) (save.mode === 'words' ? save.cats : save.tags)[save.lang] = b.dataset.filter;
   streak = 0;
   persist();
   render();
