@@ -38,13 +38,14 @@ These rules apply to everything you write: replies, code, comments, commit messa
 ```
 
 - Levels: `beginner`, `intermediate`, `advanced`.
-- Categories: `general`, `numbers`, `days`, `months`, `colors`, `family`, `food`, `animals`, `body`, `weather`, `clothing`, `home`, `jobs`, `travel`, `feelings`.
+- Categories: `general`, `numbers`, `days`, `months`, `colors`, `family`, `food`, `animals`, `body`, `weather`, `clothing`, `home`, `jobs`, `travel`, `feelings`, `verbs`, `adjectives`, `time`, `questions`.
 - Each level must include these categories:
-  - beginner: general, numbers (0 to 10), days, months, colors, family, food, animals, body
-  - intermediate: general, numbers (11 to 100), weather, clothing, home
-  - advanced: general, numbers (hundreds, thousands, a million, and ordinals such as first), jobs, travel, feelings
+  - beginner: general, numbers (0 to 10), days, months, colors, family, food, animals, body, verbs, adjectives, time (today, tomorrow, hour, and similar), questions (who, what, where, and similar)
+  - intermediate: general, numbers (11 to 100), weather, clothing, home, verbs, adjectives, time
+  - advanced: general, numbers (hundreds, thousands, a million, and ordinals such as first), jobs, travel, feelings, verbs, adjectives
+- Verbs use the infinitive, and the English meaning starts with "to", for example "to eat".
 - A category appears at most once per level. Each group needs at least 6 words.
-- Minimum words per level: beginner 80, intermediate 50, advanced 50.
+- Minimum words per level: beginner 200, intermediate 120, advanced 110.
 - A word may appear only once in a language. An English meaning may appear only once per level.
 - The answer options for a question come from the same category and level, so meanings in a group must be clearly different.
 
@@ -62,7 +63,7 @@ These rules apply to everything you write: replies, code, comments, commit messa
 - `a`: the correct answer. `o`: four different options, including the answer. Only the answer may be correct; the English translation must make the intended answer clear.
 - `en`: the English translation. `n`: a short grammar note.
 - Sentences with the same tag must be next to each other. The filter buttons appear in that order. `other` goes last.
-- Each tag needs at least 6 sentences in total. Each level needs at least 12 sentences.
+- Each tag needs at least 6 sentences in total. Each level needs at least 36 sentences.
 
 ### Levels
 

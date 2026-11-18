@@ -16,7 +16,7 @@ A retro, 8-bit style web app for practicing foreign languages. It asks multiple-
 
 - **Levels:** pick BEGINNER, INTERMEDIATE, or ADVANCED for each language. Only content at that level is shown.
 - **Words mode:** vocabulary practice. Each question shows a word in English or in the language you are learning, and you pick the translation.
-- **Categories:** in Words mode, practice one category at a time, such as numbers, days, months, colors, family, food, animals, or weather. The categories depend on the level.
+- **Categories:** in Words mode, practice one category at a time, such as numbers, days, months, colors, family, food, animals, weather, verbs, adjectives, or question words. The categories depend on the level.
 - **Sentences mode:** grammar practice. Each question is a sentence with one blank. After you answer, you see the English translation and a short grammar note.
 - **Tense filter:** in Sentences mode, practice one tense at a time (present, past, future, conditional, and others, depending on the language).
 - **Multiple choice only:** you never need to type accented letters.

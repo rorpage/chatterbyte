@@ -7,14 +7,15 @@ const fs = require("fs");
 const LANGS = ["af", "de", "es", "it", "nb", "sv", "xh"];
 const LEVELS = ["beginner", "intermediate", "advanced"];
 const CATEGORIES = ["general", "numbers", "days", "months", "colors", "family", "food", "animals", "body",
-  "weather", "clothing", "home", "jobs", "travel", "feelings"];
+  "weather", "clothing", "home", "jobs", "travel", "feelings", "verbs", "adjectives", "time", "questions"];
 const REQUIRED_CATEGORIES = {
-  beginner: ["general", "numbers", "days", "months", "colors", "family", "food", "animals", "body"],
-  intermediate: ["general", "numbers", "weather", "clothing", "home"],
-  advanced: ["general", "numbers", "jobs", "travel", "feelings"],
+  beginner: ["general", "numbers", "days", "months", "colors", "family", "food", "animals", "body",
+    "verbs", "adjectives", "time", "questions"],
+  intermediate: ["general", "numbers", "weather", "clothing", "home", "verbs", "adjectives", "time"],
+  advanced: ["general", "numbers", "jobs", "travel", "feelings", "verbs", "adjectives"],
 };
-const MIN_WORDS = { beginner: 80, intermediate: 50, advanced: 50 };
-const MIN_SENTENCES_PER_LEVEL = 12;
+const MIN_WORDS = { beginner: 200, intermediate: 120, advanced: 110 };
+const MIN_SENTENCES_PER_LEVEL = 36;
 const MIN_WORDS_PER_GROUP = 6;
 const MIN_SENTENCES_PER_TAG = 6;
 const TAGS = ["present", "preterite", "imperfect", "past", "perfect", "future", "conditional", "subjunctive", "other"];
