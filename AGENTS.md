@@ -8,6 +8,7 @@ A single-page app for language practice. The user speaks English and practices t
 - Italian (beginner)
 - Norwegian Bokmal (intermediate, maintaining skills)
 - Spanish (intermediate)
+- Swedish (beginner)
 
 Language buttons are in alphabetical order. Keep that order when adding a language to `LANGS` in `index.html`.
 
@@ -17,7 +18,7 @@ These rules apply to everything you write: replies, code, comments, commit messa
 
 - Use plain, literal language. Never use idioms, figures of speech, metaphors, slang, or clever wording. Say exactly what you mean.
 - Never use Unicode characters. This includes em dashes, en dashes, ellipsis characters, smart quotes, arrows, and emoji. Use plain ASCII: a hyphen, three periods, straight quotes.
-- The only exception is letters that a language needs, such as accented letters in Spanish, Norwegian, German, Italian, or Afrikaans words. Those letters belong only in the files in `data/`.
+- The only exception is letters that a language needs, such as accented letters in Spanish, Norwegian, Swedish, German, Italian, or Afrikaans words. Those letters belong only in the files in `data/`.
 
 ## Files
 

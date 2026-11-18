@@ -10,6 +10,7 @@ A retro, 8-bit style web app for practicing foreign languages. It asks multiple-
 - Italian (beginner)
 - Norwegian Bokmal (intermediate)
 - Spanish (intermediate)
+- Swedish (beginner)
 
 ## Features
 

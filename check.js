@@ -4,7 +4,7 @@
 const assert = require("assert");
 const fs = require("fs");
 
-const LANGS = ["af", "de", "es", "it", "nb", "xh"];
+const LANGS = ["af", "de", "es", "it", "nb", "sv", "xh"];
 const LEVELS = ["beginner", "intermediate", "advanced"];
 const CATEGORIES = ["general", "numbers", "days", "months", "colors", "family", "food", "animals", "body",
   "weather", "clothing", "home", "jobs", "travel", "feelings"];
